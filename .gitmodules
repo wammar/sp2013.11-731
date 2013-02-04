@@ -1,0 +1,3 @@
+[submodule "hw1/fsts"]
+	path = hw1/fsts
+	url = git@github.com:ldmt-muri/alignment-with-openfst.git
