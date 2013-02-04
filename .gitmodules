@@ -1,3 +1,6 @@
 [submodule "hw1/fsts"]
 	path = hw1/fsts
 	url = git@github.com:ldmt-muri/alignment-with-openfst.git
+[submodule "hw1/wammar-utils"]
+	path = hw1/wammar-utils
+	url = git@github.com:wammar/wammar-utils.git
