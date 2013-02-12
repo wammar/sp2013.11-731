@@ -91,6 +91,7 @@ for parallelLine in parallelCorpusFile:
       features['positional'] = abs(1.0 * (tgtPos+1) / len(tgtTokens) - (srcPos+1) / len(srcTokens))
       features['edit_distance'] = 1.0 * editdist.distance(tgtTokens[tgtPos], srcTokens[srcPos]) / max(len(tgtTokens[tgtPos]), len(srcTokens[srcPos]))
       features['capital'] = 1 if tgtTokens[tgtPos][0] >= 'A' and tgtTokens[tgtPos][0] <= 'Z' and srcTokens[srcPos][0] >= 'A' and srcTokens[srcPos][0] <= 'Z' and srcPos > 0 and tgtPos > 0 else 0;
+      features['{0}-{1}'.format(tgtTokens[tgtPos], srcTokens[srcPos])] = 1
 
       # write features
       featuresFile.write(json.dumps(features))
