@@ -2,6 +2,9 @@ import sys
 import json
 import argparse
 import creg
+from collections import defaultdict
+
+sentLevelFeatures = defaultdict(lambda:defaultdict(lambda:{}))
 
 def ReadExampleFeatures(files):
   # read the features
@@ -21,9 +24,24 @@ def ReadExampleFeatures(files):
           print features['id']
           assert(False)
       else:
-        features[key] = obj[key]  
+        features[key] = obj[key]
   if endOfFile:
     features = None
+  else:
+    # combine some features
+    features['m1-fwd&bwd'] = 1 if features['m1-fwd'] == 1 and features['m1-bwd'] == 1 else 0
+    features['m1-fwd|bwd'] = 1 if features['m1-fwd'] == 1 or features['m1-fwd'] == 1 else 0
+    features['prevTgtPos:srcPos'] = 1 if features['tgtPos'] > 0 and sentLevelFeatures[features['tgtPos']-1][features['srcPos']]['m1-fwd&bwd'] == 1 else 0
+    features['tgtPos:prevSrcPos'] = 1 if features['srcPos'] > 0 and sentLevelFeatures[features['tgtPos']][features['srcPos']-1]['m1-fwd&bwd'] == 1 else 0
+    features['prevTgtPos:prevSrcPos'] = 1 if features['tgtPos']*features['srcPos'] > 0 and sentLevelFeatures[features['tgtPos']-1][features['srcPos']-1]['m1-fwd&bwd'] == 1 else 0
+    sentLevelFeatures[features['tgtPos']][features['srcPos']] = features
+    features['noway'] = 1 if features['tgtPos'] > 0 \
+        and features['srcPos'] > 0 \
+        and features['m1-fwd|bwd'] == 0 \
+        and sentLevelFeatures[features['tgtPos']][features['srcPos']-1]['m1-fwd|bwd'] == 0 \
+        and sentLevelFeatures[features['tgtPos']-1][features['srcPos']]['m1-fwd|bwd'] == 0 \
+        and sentLevelFeatures[features['tgtPos']-1][features['srcPos']-1]['m1-fwd|bwd'] == 0 \
+        else 0
   return features;
 
 def ReadResponse(originalFile):
@@ -79,7 +97,7 @@ trainDatasetRaw = CreateDataset(trainFeaturesFiles, trainResponseFile)
 trainDataset = creg.CategoricalDataset(trainDatasetRaw)
 
 # train the model
-model = creg.LogisticRegression(l2=1.0)
+model = creg.LogisticRegression(l2=10.0)
 model.fit(trainDataset)
 print 'model weights:'
 print model.weights
@@ -146,7 +164,10 @@ for i in range(0, len(predictions)):
     outputAlignmentsFile.write('{0}-{1} '.format(srcPos, tgtPos))
   elif pred == 0:
     pred = 0
+  elif pred == None:
+    break
   else:
+    print pred
     assert(False)
 
 outputAlignmentsFile.write('\n')

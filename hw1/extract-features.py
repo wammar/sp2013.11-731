@@ -37,6 +37,8 @@ argParser.add_argument("-ex", "--extractExtraFeatures", type=bool, help="extract
 argParser.add_argument("-gf", "--goldAlignmentsFilename", type=str, help="a moses-style gold alignments file", default="")
 argParser.add_argument("-ff", "--featuresFilename", type=str, help="extracted training example features")
 argParser.add_argument("-rf", "--responseFilename", type=str, help="extracted training example labels")
+argParser.add_argument("-m1", "--model1ParamsFilename", type=str, help="forward model 1 param file", default="")
+argParser.add_argument("-m1r", "--model1ParamsBackwardFilename", type=str, help="backward model 1 param file", default="")
 args = argParser.parse_args()
 parallelCorpusFile = open(args.parallelCorpusFilename, 'r')
 alignmentsFile = open(args.alignmentsFilename, 'r')
@@ -45,9 +47,32 @@ if args.goldAlignmentsFilename > 0:
 featuresFile = open(args.featuresFilename + '.train', 'w')
 if args.responseFilename > 0:
   responseFile = open(args.responseFilename + '.train', 'w')
+if args.model1ParamsFilename > 0:
+  model1ParamsFile = open(args.model1ParamsFilename, 'r')
+if args.model1ParamsBackwardFilename > 0:
+  model1ParamsBackwardFile = open(args.model1ParamsBackwardFilename, 'r')
+
+punc = set([',', '.', '!', ';', '?', '\'', '"', '(', ')', '-', '>', '<', '`', '=', '+', '#', '@'])
+
+# populate a huge dictionary[tgt][src] model1 params
+print 'reading model 1 params'
+model1Forward, model1Backward = defaultdict(lambda : defaultdict(float)), defaultdict(lambda : defaultdict(float))
+for line in model1ParamsFile:
+  (tgt, src, prob) = line.split()
+  if float(prob) > 0.05:
+    model1Forward[tgt][src] = float(prob)
+for line in model1ParamsBackwardFile:
+  (src, tgt, prob) = line.split()
+  if float(prob) > 0.05:
+    model1Backward[tgt][src] = float(prob)
+#print model1Forward
+#print model1Backward
+print 'done.'
 
 linesCounter = -1
 for parallelLine in parallelCorpusFile:
+  if linesCounter % 10 == 0:
+    print '{0} lines read'.format(linesCounter)
   # read lines
   linesCounter += 1
   if linesCounter >= args.toLineNumber:
@@ -88,11 +113,17 @@ for parallelLine in parallelCorpusFile:
       else:
         features[args.alignmentsName] = 0.0
       # extra features
-      features['positional'] = abs(1.0 * (tgtPos+1) / len(tgtTokens) - (srcPos+1) / len(srcTokens))
-      features['edit_distance'] = 1.0 * editdist.distance(tgtTokens[tgtPos], srcTokens[srcPos]) / max(len(tgtTokens[tgtPos]), len(srcTokens[srcPos]))
+      features['positional1'] = 1 - abs(1.0 * (tgtPos) / len(tgtTokens) - (srcPos) / len(srcTokens)) 
+      features['positional2'] = abs(tgtPos-srcPos) / (abs(len(srcTokens)-len(tgtTokens))+1.0) 
+      features['edit_distance'] = 1 - 1.0 * editdist.distance(tgtTokens[tgtPos], srcTokens[srcPos]) / max(len(tgtTokens[tgtPos]), len(srcTokens[srcPos]))
       features['capital'] = 1 if tgtTokens[tgtPos][0] >= 'A' and tgtTokens[tgtPos][0] <= 'Z' and srcTokens[srcPos][0] >= 'A' and srcTokens[srcPos][0] <= 'Z' and srcPos > 0 and tgtPos > 0 else 0;
-      features['{0}-{1}'.format(tgtTokens[tgtPos], srcTokens[srcPos])] = 1
-
+#      features['{0}-{1}'.format(tgtTokens[tgtPos], srcTokens[srcPos])] = 1
+#      print '{0} does not contain {1}'.format(model1Forward[tgtTokens[tgtPos]], srcTokens[srcPos])
+      features['fwd1prob'] = model1Forward[tgtTokens[tgtPos]][srcTokens[srcPos]]
+      features['bwd1prob'] = model1Backward[tgtTokens[tgtPos]][srcTokens[srcPos]]
+      features['weird_punc'] = 1 if (tgtTokens[tgtPos] in punc and srcTokens[srcPos] not in punc) or (srcTokens[srcPos] in punc and tgtTokens[tgtPos] not in punc) else 0
+      features['good_punc'] = 1 if tgtTokens[tgtPos] in punc and srcTokens[srcPos] in punc else 0
+      
       # write features
       featuresFile.write(json.dumps(features))
       featuresFile.write('\n')
