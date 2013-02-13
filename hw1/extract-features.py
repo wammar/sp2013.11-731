@@ -47,24 +47,27 @@ if args.goldAlignmentsFilename > 0:
 featuresFile = open(args.featuresFilename + '.train', 'w')
 if args.responseFilename > 0:
   responseFile = open(args.responseFilename + '.train', 'w')
-if args.model1ParamsFilename > 0:
+if len(args.model1ParamsFilename) > 0:
   model1ParamsFile = open(args.model1ParamsFilename, 'r')
-if args.model1ParamsBackwardFilename > 0:
+if len(args.model1ParamsBackwardFilename) > 0:
   model1ParamsBackwardFile = open(args.model1ParamsBackwardFilename, 'r')
 
 punc = set([',', '.', '!', ';', '?', '\'', '"', '(', ')', '-', '>', '<', '`', '=', '+', '#', '@'])
 
+
 # populate a huge dictionary[tgt][src] model1 params
 print 'reading model 1 params'
 model1Forward, model1Backward = defaultdict(lambda : defaultdict(float)), defaultdict(lambda : defaultdict(float))
-for line in model1ParamsFile:
-  (tgt, src, prob) = line.split()
-  if float(prob) > 0.05:
-    model1Forward[tgt][src] = float(prob)
-for line in model1ParamsBackwardFile:
-  (src, tgt, prob) = line.split()
-  if float(prob) > 0.05:
-    model1Backward[tgt][src] = float(prob)
+if args.model1ParamsFilename:
+  for line in model1ParamsFile:
+    (tgt, src, prob) = line.split()
+    if float(prob) > 0.05:
+      model1Forward[tgt][src] = float(prob)
+if args.model1ParamsBackwardFilename:
+  for line in model1ParamsBackwardFile:
+    (src, tgt, prob) = line.split()
+    if float(prob) > 0.05:
+      model1Backward[tgt][src] = float(prob)
 #print model1Forward
 #print model1Backward
 print 'done.'
@@ -119,8 +122,10 @@ for parallelLine in parallelCorpusFile:
       features['capital'] = 1 if tgtTokens[tgtPos][0] >= 'A' and tgtTokens[tgtPos][0] <= 'Z' and srcTokens[srcPos][0] >= 'A' and srcTokens[srcPos][0] <= 'Z' and srcPos > 0 and tgtPos > 0 else 0;
 #      features['{0}-{1}'.format(tgtTokens[tgtPos], srcTokens[srcPos])] = 1
 #      print '{0} does not contain {1}'.format(model1Forward[tgtTokens[tgtPos]], srcTokens[srcPos])
-      features['fwd1prob'] = model1Forward[tgtTokens[tgtPos]][srcTokens[srcPos]]
-      features['bwd1prob'] = model1Backward[tgtTokens[tgtPos]][srcTokens[srcPos]]
+      if args.model1ParamsFilename:
+        features['fwd1prob'] = model1Forward[tgtTokens[tgtPos]][srcTokens[srcPos]]
+      if args.model1ParamsBackwardFilename:
+        features['bwd1prob'] = model1Backward[tgtTokens[tgtPos]][srcTokens[srcPos]]
       features['weird_punc'] = 1 if (tgtTokens[tgtPos] in punc and srcTokens[srcPos] not in punc) or (srcTokens[srcPos] in punc and tgtTokens[tgtPos] not in punc) else 0
       features['good_punc'] = 1 if tgtTokens[tgtPos] in punc and srcTokens[srcPos] in punc else 0
       

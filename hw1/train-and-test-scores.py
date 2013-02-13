@@ -97,7 +97,7 @@ trainDatasetRaw = CreateDataset(trainFeaturesFiles, trainResponseFile)
 trainDataset = creg.CategoricalDataset(trainDatasetRaw)
 
 # train the model
-model = creg.LogisticRegression(l2=10.0)
+model = creg.LogisticRegression(l2=1.0)
 model.fit(trainDataset)
 print 'model weights:'
 print model.weights
