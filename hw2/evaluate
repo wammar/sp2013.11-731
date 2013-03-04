@@ -8,6 +8,17 @@ def word_matches(h, ref):
     # or sum(w in ref for w in f) # cast bool -> int
     # or sum(map(ref.__contains__, h)) # ugly!
  
+def score(prec, recall, recall_weight):
+#  return prec
+  assert(recall_weight >= 0 and recall_weight <= 1)
+  prec_weight = 1 - recall_weight
+  if prec+recall == 0:
+    return 0
+  else:
+    score = prec * recall / (prec_weight * prec + recall_weight * recall)
+#    score = prec_weight * prec + recall_weight * recall
+    return score
+
 def main():
     parser = argparse.ArgumentParser(description='Evaluate translation hypotheses.')
     # PEP8: use ' and not " for strings
@@ -26,12 +37,20 @@ def main():
  
     # note: the -n option does not work in the original code
     for h1, h2, ref in islice(sentences(), opts.num_sentences):
-        rset = set(ref)
-        h1_match = word_matches(h1, rset)
-        h2_match = word_matches(h2, rset)
-        print(-1 if h1_match > h2_match else # \begin{cases}
-                (0 if h1_match == h2_match
-                    else 1)) # \end{cases}
+        (h1Set, h2Set, refSet) = ( set(h1), set(h2), set(ref) )
+        h1_precision = 1.0 * word_matches(h1, refSet) / len(h1)
+        h1_recall = 1.0 * word_matches(ref, h1Set) / len(ref)
+        h2_precision = 1.0 * word_matches(h2, refSet) / len(h2)
+        h2_recall = 1.0 * word_matches(ref, h2Set) / len(ref)
+        recall_weight = 0.7
+        h1_score = score(h1_precision, h1_recall, recall_weight)
+        h2_score = score(h2_precision, h2_recall, recall_weight)
+        if h1_score < h2_score:
+            print 1
+        elif h1_score > h2_score:
+            print -1
+        else:
+            print 0
  
 # convention to allow import of this file as a module
 if __name__ == '__main__':
