@@ -7,3 +7,6 @@
 [submodule "hw1/creg"]
 	path = hw1/creg
 	url = git://github.com/redpony/creg.git
+[submodule "hw2/wammar-utils"]
+	path = hw2/wammar-utils
+	url = git://github.com/wammar/wammar-utils.git
