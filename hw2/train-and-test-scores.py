@@ -7,6 +7,7 @@ from collections import defaultdict
 SAME = 'SAME'
 INVALID = 'INVALID'
 BETTER = 'BETTER'
+UNKNOWN = 'UNKNOWN'
 
 #sentLevelFeatures = defaultdict(lambda:defaultdict(lambda:{}))
 
@@ -36,24 +37,35 @@ def ReadResponse(originalFile, classifierType):
       response = 'NOT-{0}'.format(BETTER)
   return response
 
-def CreateDataset(trainFeaturesFile, trainResponseFile, classifierType):
+def CreateDataset(featuresFile, responseFile, classifierType, include_invalid_sents=False):
+  if responseFile:
+    print 'creating a dataset for a {0} classifier. from file features file {1} and response file {2}...'.format(classifierType, featuresFile.name, responseFile.name)
+  else:
+    print 'creating a dataset for a {0} classifier. from file features file {1}...'.format(classifierType, featuresFile.name)
   # create training set
   trainData = []
   while True:
     # read features
-    features = ReadExampleFeatures(trainFeaturesFile)
+    features = ReadExampleFeatures(featuresFile)
     if features == None:
       break
 
     # read response
-    response = ReadResponse(trainResponseFile, classifierType)
+    if responseFile:
+      response = ReadResponse(responseFile, classifierType)
+    else:
+      response = UNKNOWN
 
     # append to training data
-    if response != INVALID:
+    if response == INVALID and not include_invalid_sents:
       continue
     else:
       trainData.append((features, response))
 
+  # rewind the files for future use
+  featuresFile.seek(0)
+  if responseFile:
+    responseFile.seek(0)
   return trainData
 
 def TranslateLabelsIntoAnswer(samePrediction, betterPrediction):
@@ -82,27 +94,37 @@ predictedResponseFile = open(args.predictedResponseFilename, 'w') if len(args.pr
 
 # TRAIN 'SAME' CLASSIFIER
 # create train dataset
-trainDatasetRaw = CreateDataset(trainFeaturesFile, trainResponseFile, SAME)
+trainSameDatasetRaw = CreateDataset(trainFeaturesFile, trainResponseFile, SAME)
+print 'SAME training dataset contains {0} examples.'.format(len(trainSameDatasetRaw))
 # pack it in creg.RealvaluedDataset
-trainDataset = creg.CategoricalDataset(trainDatasetRaw)
+trainSameDataset = creg.CategoricalDataset(trainSameDatasetRaw)
 # train the model
-sameModel = creg.LogisticRegression(l2=1.0)
-sameModel.fit(trainDataset)
-print 'same model weights:'
+sameModel = creg.LogisticRegression(l2=10.0)
+print 'started fitting the SAME model...'
+sameModel.fit(trainSameDataset)
+print 'done. same model weights:'
 print sameModel.weights
+print '\n\n'
 
 # TRAIN 'BETTER' CLASSIFIER
-trainDatasetRaw = CreateDataset(trainFeaturesFile, trainResponseFile, BETTER)
-trainDataset = creg.CategoricalDataset(trainDatasetRaw)
-betterModel = creg.LogisticRegression(l2=1.0)
-betterModel.fit(trainDataset)
-print 'better model weights:'
+trainBetterDatasetRaw = CreateDataset(trainFeaturesFile, trainResponseFile, BETTER)
+print 'BETTER training dataset contains {0} examples.'.format(len(trainBetterDatasetRaw))
+trainBetterDataset = creg.CategoricalDataset(trainBetterDatasetRaw)
+betterModel = creg.LogisticRegression(l2=10.0)
+print 'started fitting the BETTER model...'
+betterModel.fit(trainBetterDataset)
+print 'done. better model weights:'
 print betterModel.weights
+print '\n\n'
+
+print '============== TRAINING FINISHED! ==============\n\n'
 
 # create eval datasets
 evalSameDatasetRaw = CreateDataset(testFeaturesFile, testResponseFile, SAME)
-evalSameDataset = creg.CategoricalDataset(evalBetterDatasetRaw)
-evalBetterDatasetRaw = CreateDataset(testFeaturesFile, testResponseFile, BETTER)
+print 'SAME eval dataset contains {0} examples.'.format(len(evalSameDatasetRaw))
+evalSameDataset = creg.CategoricalDataset(evalSameDatasetRaw)
+evalBetterDatasetRaw = CreateDataset(testFeaturesFile, testResponseFile, BETTER, include_invalid_sents=True)
+print 'BETTER eval dataset contains {0} examples.'.format(len(evalBetterDatasetRaw))
 evalBetterDataset = creg.CategoricalDataset(evalBetterDatasetRaw)
 
 # evaluate
@@ -118,18 +140,28 @@ for same, better in zip(evalSamePredictions, evalBetterPredictions):
     predictedResponseFile.write(output + '\n')
 
 # analyze
-if testResponseFile != None:
+if testResponseFile:
+
+  # build same matrix
   sameMatrix = defaultdict(int)
   for (pred, (f, truth)) in zip(samePredictions, evalSameDataset):
     sameMatrix['{0}, {1}'.format(pred, truth)] += 1
+
+  # print same matrix
   print '\n\nSAME MATRIX:\n'
-  for key,val in sameMatrix:
+  for key in sameMatrix.keys():
+    val = sameMatrix[key]
     print '{0} => {1}'.format(key, val)
+
+  # build better matrix
   betterMatrix = defaultdict(int)
   for (pred, (f, truth)) in zip(betterPredictions, evalBetterDataset):
     betterMatrix['{0}, {1}'.format(pred, truth)] += 1
+
+  # print better matrix
   print '\n\nBETTER MATRIX:\n'
-  for key,val in betterMatrix:
+  for key in betterMatrix.keys():
+    val = betterMatrix[key]
     print '{0} => {1}'.format(key, val)
 
 trainFeaturesFile.close()

@@ -50,22 +50,25 @@ for parallelLine in inputFile:
   h1_precision = 1.0 * unigram_matches(h1, refSet) / len(h1)
   h2_precision = 1.0 * unigram_matches(h2, refSet) / len(h2)
   features['unigram-precision'] = h1_precision - h2_precision
+  features['abs-unigram-precision'] = abs( h1_precision - h2_precision )
 
   # compute unigram recall diff
   h1_recall = 1.0 * unigram_matches(ref, h1Set) / len(ref)
   h2_recall = 1.0 * unigram_matches(ref, h2Set) / len(ref)
-  features[u'unigram-recall'] = h1_recall - h2_recall
+  features['unigram-recall'] = h1_recall - h2_recall
+  features['abs-unigram-recall'] = abs( h1_recall - h2_recall )
 
   # compute diff in harmonic mean of unigram precision,recall
   recall_weight = 0.7
   h1_harmonic = score(h1_precision, h1_recall, recall_weight)
   h2_harmonic = score(h2_precision, h2_recall, recall_weight)
   features['harmonic'] = h1_harmonic - h2_harmonic
-
+  features['abs-harmonic'] = abs( h1_harmonic - h2_harmonic )
+  
   # write features
   featuresFile.write(json.dumps(features))
   featuresFile.write('\n')
-      
+
 # close files
 inputFile.close()
 featuresFile.close()
