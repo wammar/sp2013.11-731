@@ -11,13 +11,17 @@ UNKNOWN = 'UNKNOWN'
 
 #sentLevelFeatures = defaultdict(lambda:defaultdict(lambda:{}))
 
-def ReadExampleFeatures(featuresFile):
+def ReadExampleFeatures(featuresFile, classifierType):
+  assert(classifierType == 'SAME' or classifierType == 'BETTER')
   # read the features
   line = featuresFile.readline()
   if(len(line) == 0):
-    features = None
+    return None
   else:
     features = json.loads(line)
+  for key in features.keys():
+    if not key.startswith(classifierType):
+      features[key] = 0.0
   return features;
 
 def ReadResponse(originalFile, classifierType):
@@ -46,7 +50,7 @@ def CreateDataset(featuresFile, responseFile, classifierType, include_invalid_se
   trainData = []
   while True:
     # read features
-    features = ReadExampleFeatures(featuresFile)
+    features = ReadExampleFeatures(featuresFile, classifierType)
     if features == None:
       break
 
@@ -99,7 +103,7 @@ print 'SAME training dataset contains {0} examples.'.format(len(trainSameDataset
 # pack it in creg.RealvaluedDataset
 trainSameDataset = creg.CategoricalDataset(trainSameDatasetRaw)
 # train the model
-sameModel = creg.LogisticRegression(l2=10.0)
+sameModel = creg.LogisticRegression(l2=100.0)
 print 'started fitting the SAME model...'
 sameModel.fit(trainSameDataset)
 print 'done. same model weights:'
