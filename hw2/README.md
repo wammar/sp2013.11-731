@@ -8,3 +8,4 @@ Things I have tried:
  - sentence length penatly (helps)
  - use word embeddings to determine word similarity (doesn't help with a hard threshold)
  - add ngram precision and ngram recall as features (only recall helps!)
+ - add character ngram recall (helps!)
