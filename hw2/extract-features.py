@@ -175,8 +175,8 @@ for parallelLine in inputFile:
   features = {}
 
   # compute unigram precision diff
-  h1_precision = 1.0 * unigram_matches(h1, refSet) / len(h1)
-  h2_precision = 1.0 * unigram_matches(h2, refSet) / len(h2)
+#  h1_precision = 1.0 * unigram_matches(h1, refSet) / len(h1)
+#  h2_precision = 1.0 * unigram_matches(h2, refSet) / len(h2)
 #  features['BETTER-unigram-precision'] = h1_precision - h2_precision
 #  features['SAME-unigram-precision'] = abs( h1_precision - h2_precision )
 
@@ -191,8 +191,8 @@ for parallelLine in inputFile:
   for n in range(2, 6):
     if n == 4:
       continue
-    h1_ngram_precision = 1.0 * ngram_matches(h1, ref, n) / (len(h1) + n - 1)
-    h2_ngram_precision = 1.0 * ngram_matches(h2, ref, n) / (len(h2) + n - 1)
+#    h1_ngram_precision = 1.0 * ngram_matches(h1, ref, n) / (len(h1) + n - 1)
+#    h2_ngram_precision = 1.0 * ngram_matches(h2, ref, n) / (len(h2) + n - 1)
 #    features['BETTER-{0}gram-precision'.format(n)] = h1_ngram_precision - h2_ngram_precision
 #    features['SAME-{0}gram-precision'.format(n)] = abs(h1_ngram_precision - h2_ngram_precision)
 
@@ -202,17 +202,17 @@ for parallelLine in inputFile:
 #    features['SAME-{0}gram-recall'.format(n)] = abs(h1_ngram_recall - h2_ngram_recall)
 
   # compute character ngram recall and precision
-  for n in range(3, 10):
+  for n in [3, 9, 15]:
     h1_char_ngram_recall = 1.0 * ngram_matches(refChar, h1Char, n) / (len(h1Char) + n - 1)
     h2_char_ngram_recall = 1.0 * ngram_matches(refChar, h2Char, n) / (len(h2Char) + n - 1)
     features['BETTER-char-{0}gram-recall'.format(n)] = h1_char_ngram_recall - h2_char_ngram_recall
 
   # approx matches and alignments
   # approx precision
-  (h1ApproxMatches, h1AlignmentJumps) = approx_unigram_matches(h1, ref)
-  (h2ApproxMatches, h2AlignmentJumps) = approx_unigram_matches(h2, ref)
-  h1_approx_precision = 1.0 * h1ApproxMatches / len(h1)
-  h2_approx_precision = 1.0 * h2ApproxMatches / len(h2)
+#  (h1ApproxMatches, h1AlignmentJumps) = approx_unigram_matches(h1, ref)
+#  (h2ApproxMatches, h2AlignmentJumps) = approx_unigram_matches(h2, ref)
+#  h1_approx_precision = 1.0 * h1ApproxMatches / len(h1)
+#  h2_approx_precision = 1.0 * h2ApproxMatches / len(h2)
 #  features['BETTER-approx-precision'] = h1_approx_precision - h2_approx_precision
 #  features['SAME-approx-precision'] = abs(h1_approx_precision - h2_approx_precision)
   # approx recall
