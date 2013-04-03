@@ -4,19 +4,14 @@ Homework 3
 Waleed Ammar & Manaal Faruqui
 -----------------------------
 
-We implement a stack based decoder which allows reordering.
-We use a bit vector that represents at any time step how many source phrases have been translated.
+Summary:
+- two-stage decoding
+1. first stage is a standard stack-based decoder which allows reordering, handles OOVs, ... etc.
+2. second stage is a beam sampler which starts with the k-best complete hypotheses in the first stage, and resamples them by merging two phrases, splitting a phrase into two, swapping two phrases, or retranslating a source phrase.
 
-Our decoder  is basically divided into two parts:-
+In the stack-based decoder, a few things made a good improvement: filtering the stacks based on a heuristic probability of the hypothesis which takes into account the future cost**, a distortion cost** and brevity penalty.
 
-1. This part contruscts a translation given the input sentence, tm and lm. 
+In the beam sampler, we compute the difference in lm score while resampling in an efficient way. Also, we filter the beam based on the marginalized score of a complete hypothesis. 
 
-a) We allow distortions to take place and assign a distortion threshold and distortion penalty. 
-b) We implement a future cost for translations which is the best cost possible for translating the untranslated phrases in the source.
+Since the decoder is fast (especially with small stack sizes), we decoded the test set using several configurations and combined them based on the marginal translation score, which helped a little. 
 
-2. The sencond part takes the input of the first part and performs edits on it.
-
-a) We try to modify it using, swapping and merging of adjacent phrase pairs in the source sentence.
-b) We also try to split and reltranslate a given phrase in the source.
-
-All these opertions have parameters which we have tuned to obtain the best performance.
