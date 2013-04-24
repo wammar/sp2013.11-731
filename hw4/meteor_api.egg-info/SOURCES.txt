@@ -1,0 +1,5 @@
+meteor_api.egg-info/PKG-INFO
+meteor_api.egg-info/SOURCES.txt
+meteor_api.egg-info/dependency_links.txt
+meteor_api.egg-info/not-zip-safe
+meteor_api.egg-info/top_level.txt

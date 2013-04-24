@@ -1,0 +1,10 @@
+Waleed Ammar - Victor Chahuneau - Manaal Faruqui
+
+We implemented METEOR tuning with PRO.
+
+The following features were used:
+- number of target words
+- number of Russian-looking target words
+- alignment features: distance to the diagonal, number and distance of forward / backward jumps, fertility (binned)
+- Brown clusters 10-gram LM and lexical TM
+- discriminative word lexicon (trained on small amounts of data)

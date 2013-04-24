@@ -1,0 +1,11 @@
+## Preliminary requirements
+
+    pip install -r requirements.txt
+
+## To add METEOR support to PRO
+
+1. Download meteor (for example, by running ./score-meteor)
+2. Compile the Python interface:
+    python -m jcc --jar ../meteor-1.4/meteor-1.4.jar --python meteor_api --build --install --package java.net java.net.URL
+3. Check that it worked by running:
+    python -c "import metrics; print metrics.meteor('hello', 'hello world')"
